@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#81edbb">
+  <meta name="theme-color" content="#e9f6ed">
   <meta name="description" content="보호자는 목적지를 보내고, 길을 걷는 사람은 큰 화살표와 음성 안내를 따라가요. Follow ME로 가족의 이동을 함께하세요.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Follow ME | 걱정은 줄이고, 마음은 더 가까이">
@@ -31,36 +31,46 @@
   </header>
 
   <main id="main">
-    <section class="hero" id="top" aria-labelledby="hero-heading" data-hero-scroll>
-      <div class="shell hero-inner" data-hero-stage>
-        <div class="hero-copy">
-          <p class="section-label">가족을 위한 쉬운 길 안내</p>
-          <h1 id="hero-heading">걱정은 줄이고, 마음은 더 가까이.</h1>
-          <p class="hero-description">보호자가 길을 보내면 큰 화살표와 음성으로 안내해요.<br class="desktop-break"> 출발부터 도착까지, 서로의 안부를 확인할 수 있어요.</p>
-          <div class="hero-actions">
-            <a class="button button-dark" href="https://apps.apple.com/kr/app/follow-me/id6746979573">App Store에서 받기</a>
-            <a class="button button-outline" href="#how">사용 방법 보기</a>
-          </div>
-        </div>
-        <div class="hero-visual">
-          <div class="hero-halo" aria-hidden="true"></div>
-          <div class="device hero-device hero-device-guardian">
-            <img src="assets/screen-guardian.webp" width="460" height="999" alt="보호자가 도착 예정 시간과 이동 상태를 확인하는 화면" fetchpriority="high">
-          </div>
-          <div class="device hero-device hero-device-arrow">
-            <img src="assets/screen-arrow.webp" width="460" height="999" alt="큰 초록색 화살표로 앞으로 가라고 안내하는 화면" fetchpriority="high">
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="opening" id="top" data-opening>
+      <span class="opening-snap-point" data-opening-snap-start aria-hidden="true"></span>
+      <span class="opening-snap-point" data-opening-snap-intro aria-hidden="true"></span>
+      <div class="opening-window" data-opening-window>
+        <div class="opening-track" data-opening-track>
+          <section class="hero" aria-labelledby="hero-heading" data-hero-scroll>
+            <div class="shell hero-inner" data-hero-stage>
+              <div class="hero-copy">
+                <p class="section-label">가족을 위한 쉬운 길 안내</p>
+                <h1 id="hero-heading"><span>걱정은 줄이고,</span> <span>마음은 더 가까이.</span></h1>
+                <p class="hero-description">보호자가 길을 보내면 큰 화살표와 음성으로 안내해요.<br class="desktop-break"> 출발부터 도착까지, 서로의 안부를 확인할 수 있어요.</p>
+                <div class="hero-actions">
+                  <a class="button button-dark" href="https://apps.apple.com/kr/app/follow-me/id6746979573">App Store에서 받기</a>
+                  <a class="button button-outline" href="#how">사용 방법 보기</a>
+                </div>
+              </div>
+              <figure class="hero-visual">
+                <canvas class="hero-route" data-hero-route aria-hidden="true"></canvas>
+                <div class="device hero-device hero-device-guardian">
+                  <img src="assets/screen-guardian.webp" width="460" height="999" alt="보호자가 도착 예정 시간과 이동 상태를 확인하는 화면" fetchpriority="high">
+                </div>
+                <div class="device hero-device hero-device-arrow">
+                  <img src="assets/screen-arrow.webp" width="460" height="999" alt="큰 초록색 화살표로 앞으로 가라고 안내하는 화면" fetchpriority="high">
+                </div>
+                <button class="hero-motion-toggle" type="button" data-hero-motion-toggle aria-label="지도 움직임 일시정지" aria-pressed="false" title="지도 움직임 일시정지" hidden></button>
+                <figcaption class="hero-caption">실시간 위치 공유</figcaption>
+              </figure>
+            </div>
+          </section>
 
-    <section class="intro" aria-labelledby="intro-heading">
-      <div class="shell intro-inner" data-reveal>
-        <p class="section-label">Follow ME를 만든 이유</p>
-        <h2 id="intro-heading">혼자 걷는 길에도, <em>함께하는 마음.</em></h2>
-        <p>지도가 낯선 어르신이나 어린이에게는 처음 가는 길이 어렵게 느껴질 수 있어요. Follow ME는 가족이 길을 보내고 도착을 확인할 수 있도록, 길 안내와 위치 공유를 한곳에 담았어요.</p>
+          <section class="intro" aria-labelledby="intro-heading">
+            <div class="shell intro-inner" data-reveal>
+              <p class="section-label">Follow ME를 만든 이유</p>
+              <h2 id="intro-heading">혼자 걷는 길에도, <em>함께하는 마음.</em></h2>
+              <p>지도가 낯선 어르신이나 어린이에게는 처음 가는 길이 어렵게 느껴질 수 있어요. Follow ME는 가족이 길을 보내고 도착을 확인할 수 있도록, 길 안내와 위치 공유를 한곳에 담았어요.</p>
+            </div>
+          </section>
+        </div>
       </div>
-    </section>
+    </div>
 
     <section class="how section-space" id="how" aria-labelledby="how-heading">
       <div class="shell">
@@ -70,7 +80,7 @@
         </header>
         <div class="walkthrough" data-walkthrough>
           <div class="steps walkthrough-steps">
-            <article class="step" data-walkthrough-step data-reveal>
+            <article class="step" id="walkthrough-pair" tabindex="-1" data-walkthrough-step data-reveal>
               <div class="step-art step-art-pair">
                 <div class="device"><img src="assets/screen-pair.webp" width="460" height="999" loading="lazy" alt="보호자와 연결하기 위한 QR 코드 화면"></div>
               </div>
@@ -79,7 +89,7 @@
                 <p>길을 안내받을 분이 보호자 휴대폰의 QR을 스캔해 연결해요. 보호자는 목적지를 정해 길을 보낼 수 있어요.</p>
               </div>
             </article>
-            <article class="step" data-walkthrough-step data-reveal>
+            <article class="step" id="walkthrough-guide" tabindex="-1" data-walkthrough-step data-reveal>
               <div class="step-art step-art-guide">
                 <div class="device"><img src="assets/screen-arrow.webp" width="460" height="999" loading="lazy" alt="앞으로 가세요라는 문구와 초록색 화살표가 표시된 길 안내 화면"></div>
               </div>
@@ -88,7 +98,7 @@
                 <p>화살표와 음성, 진동으로 다음 방향을 알려줘요. 버스나 지하철을 탈 때도 타고 내릴 곳을 안내해요.</p>
               </div>
             </article>
-            <article class="step" data-walkthrough-step data-reveal>
+            <article class="step" id="walkthrough-arrival" tabindex="-1" data-walkthrough-step data-reveal>
               <div class="step-art step-art-guardian">
                 <div class="device"><img src="assets/screen-guardian.webp" width="460" height="999" loading="lazy" alt="보호자가 이동 중인 경로의 도착 예정과 알림을 보는 화면"></div>
               </div>
@@ -98,14 +108,19 @@
               </div>
             </article>
           </div>
-          <div class="walkthrough-stage" data-walkthrough-stage aria-hidden="true">
+          <div class="walkthrough-stage" data-walkthrough-stage>
             <div class="walkthrough-art">
-              <div class="device walkthrough-device">
+              <div class="device walkthrough-device" aria-hidden="true">
                 <img class="is-current" data-walkthrough-image src="assets/screen-pair.webp" width="460" height="999" loading="lazy" alt="">
                 <img data-walkthrough-image src="assets/screen-arrow.webp" width="460" height="999" loading="lazy" alt="">
                 <img data-walkthrough-image src="assets/screen-guardian.webp" width="460" height="999" loading="lazy" alt="">
               </div>
-              <div class="walkthrough-progress"><span></span><span></span><span></span></div>
+              <nav class="walkthrough-route" aria-label="사용 방법 단계">
+                <canvas data-walkthrough-route aria-hidden="true"></canvas>
+                <a href="#walkthrough-pair" data-route-stop aria-current="step"><span>QR 연결</span></a>
+                <a href="#walkthrough-guide" data-route-stop><span>길 안내</span></a>
+                <a href="#walkthrough-arrival" data-route-stop><span>도착 확인</span></a>
+              </nav>
             </div>
           </div>
         </div>
@@ -120,43 +135,48 @@
         </header>
 
         <div class="gallery" data-gallery>
-          <div class="gallery-tabs" data-gallery-tabs aria-label="살펴볼 앱 화면">
-            <button type="button" data-gallery-tab id="tab-direction" aria-controls="panel-direction">방향 안내</button>
-            <button type="button" data-gallery-tab id="tab-lock" aria-controls="panel-lock">잠금화면</button>
-            <button type="button" data-gallery-tab id="tab-arrival" aria-controls="panel-arrival">도착과 연락</button>
+          <span class="gallery-snap-point" data-gallery-snap="0" aria-hidden="true"></span>
+          <span class="gallery-snap-point" data-gallery-snap="1" aria-hidden="true"></span>
+          <span class="gallery-snap-point" data-gallery-snap="2" aria-hidden="true"></span>
+          <div class="gallery-window" data-gallery-window>
+            <div class="gallery-track" data-gallery-track>
+              <article class="gallery-panel gallery-panel-direction" id="panel-direction" data-gallery-panel>
+                <div class="gallery-panel-copy">
+                  <h3>돌아갈 방향도 한눈에 보여요.</h3>
+                  <p>모퉁이에서는 다음 방향을 크게 표시해요. 길을 벗어나면 화살표와 음성으로 돌아갈 방향을 알려줘요.</p>
+                </div>
+                <div class="gallery-images">
+                  <div class="device"><img src="assets/screen-turn.webp" width="460" height="999" loading="lazy" alt="초록색 화살표와 왼쪽으로 가세요라는 문구가 표시된 화면"></div>
+                  <div class="device"><img src="assets/screen-offroute.webp" width="460" height="999" loading="lazy" alt="경로를 벗어났을 때 노란 화살표로 돌아갈 방향을 안내하는 화면"></div>
+                </div>
+              </article>
+
+              <article class="gallery-panel gallery-panel-lock" id="panel-lock" data-gallery-panel>
+                <div class="gallery-panel-copy">
+                  <h3>잠금화면에서도 안내를 이어가요.</h3>
+                  <p>다음에 어느 방향으로 갈지 iPhone 잠금화면에서 확인할 수 있어요. Apple Watch에서도 안내를 볼 수 있어요.</p>
+                </div>
+                <div class="gallery-images">
+                  <div class="device"><img src="assets/screen-lock.webp" width="460" height="999" loading="lazy" alt="iPhone 잠금화면에서 다음 방향을 보여주는 실시간 현황"></div>
+                </div>
+              </article>
+
+              <article class="gallery-panel gallery-panel-arrival" id="panel-arrival" data-gallery-panel>
+                <div class="gallery-panel-copy">
+                  <h3>도착은 또렷하게, 연락은 간편하게.</h3>
+                  <p>목적지에 도착하면 큰 체크 표시로 알려줘요. 보호자가 연락처를 등록했다면 앱에서 바로 전화할 수 있어요.</p>
+                </div>
+                <div class="gallery-images">
+                  <div class="device"><img src="assets/screen-start.webp" width="460" height="999" loading="lazy" alt="보호자가 보낸 길과 바로 전화하기 버튼을 보여주는 출발 화면"></div>
+                  <div class="device"><img src="assets/screen-arrived.webp" width="460" height="999" loading="lazy" alt="큰 체크 표시와 도착했어요라는 문구가 표시된 화면"></div>
+                </div>
+              </article>
+            </div>
+            <div class="gallery-scroll-footer">
+              <p>스크롤해서 화면 넘기기</p>
+              <div class="gallery-progress" aria-hidden="true"><span></span><span></span><span></span></div>
+            </div>
           </div>
-
-          <article class="gallery-panel gallery-panel-direction" id="panel-direction" data-gallery-panel>
-            <div class="gallery-panel-copy">
-              <h3>돌아갈 방향도 한눈에 보여요.</h3>
-              <p>모퉁이에서는 다음 방향을 크게 표시해요. 길을 벗어나면 화살표와 음성으로 돌아갈 방향을 알려줘요.</p>
-            </div>
-            <div class="gallery-images">
-              <div class="device"><img src="assets/screen-turn.webp" width="460" height="999" loading="lazy" alt="초록색 화살표와 왼쪽으로 가세요라는 문구가 표시된 화면"></div>
-              <div class="device"><img src="assets/screen-offroute.webp" width="460" height="999" loading="lazy" alt="경로를 벗어났을 때 노란 화살표로 돌아갈 방향을 안내하는 화면"></div>
-            </div>
-          </article>
-
-          <article class="gallery-panel gallery-panel-lock" id="panel-lock" data-gallery-panel>
-            <div class="gallery-panel-copy">
-              <h3>잠금화면에서도 안내를 이어가요.</h3>
-              <p>다음에 어느 방향으로 갈지 iPhone 잠금화면에서 확인할 수 있어요. Apple Watch에서도 안내를 볼 수 있어요.</p>
-            </div>
-            <div class="gallery-images">
-              <div class="device"><img src="assets/screen-lock.webp" width="460" height="999" loading="lazy" alt="iPhone 잠금화면에서 다음 방향을 보여주는 실시간 현황"></div>
-            </div>
-          </article>
-
-          <article class="gallery-panel gallery-panel-arrival" id="panel-arrival" data-gallery-panel>
-            <div class="gallery-panel-copy">
-              <h3>도착은 또렷하게, 연락은 간편하게.</h3>
-              <p>목적지에 도착하면 큰 체크 표시로 알려줘요. 보호자가 연락처를 등록했다면 앱에서 바로 전화할 수 있어요.</p>
-            </div>
-            <div class="gallery-images">
-              <div class="device"><img src="assets/screen-start.webp" width="460" height="999" loading="lazy" alt="보호자가 보낸 길과 바로 전화하기 버튼을 보여주는 출발 화면"></div>
-              <div class="device"><img src="assets/screen-arrived.webp" width="460" height="999" loading="lazy" alt="큰 체크 표시와 도착했어요라는 문구가 표시된 화면"></div>
-            </div>
-          </article>
         </div>
       </div>
     </section>

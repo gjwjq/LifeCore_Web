@@ -1,62 +1,22 @@
-function initializeGallery(gallery) {
-  const tablist = gallery.querySelector('[data-gallery-tabs]');
-  if (!tablist) return;
+import {createWalkthroughRoute} from './route.js';
+import {initializeHeroScene} from './hero-scene.js';
+import {createOpeningTransition} from './opening.js';
+import {createGalleryScroll} from './gallery-scroll.js';
 
-  const tabs = Array.from(tablist.querySelectorAll('[data-gallery-tab]'));
-  const panels = tabs.map((tab) => document.getElementById(tab.getAttribute('aria-controls')));
-  if (!tabs.length || panels.some((panel) => !panel?.matches('[data-gallery-panel]') || !gallery.contains(panel))) return;
-
-  tablist.setAttribute('role', 'tablist');
-
-  function activateTab(index) {
-    tabs.forEach((tab, tabIndex) => {
-      const isSelected = tabIndex === index;
-      tab.setAttribute('aria-selected', String(isSelected));
-      tab.tabIndex = isSelected ? 0 : -1;
-      panels[tabIndex].hidden = !isSelected;
-    });
-  }
-
-  tabs.forEach((tab, index) => {
-    const panel = panels[index];
-    tab.id ||= `${panel.id}-tab`;
-    tab.setAttribute('role', 'tab');
-    panel.setAttribute('role', 'tabpanel');
-    panel.setAttribute('aria-labelledby', tab.id);
-    tab.addEventListener('click', () => {
-      activateTab(index);
-      tab.focus();
-    });
-    tab.addEventListener('keydown', (event) => {
-      let nextIndex;
-      switch (event.key) {
-        case 'ArrowLeft':
-          nextIndex = (index + tabs.length - 1) % tabs.length;
-          break;
-        case 'ArrowRight':
-          nextIndex = (index + 1) % tabs.length;
-          break;
-        case 'Home':
-          nextIndex = 0;
-          break;
-        case 'End':
-          nextIndex = tabs.length - 1;
-          break;
-        default:
-          return;
-      }
-
-      event.preventDefault();
-      activateTab(nextIndex);
-      tabs[nextIndex].focus();
-    });
+const setHeroMotionPaused = initializeHeroScene(document.querySelector('[data-hero-route]'));
+const heroMotionToggle = document.querySelector('[data-hero-motion-toggle]');
+if (heroMotionToggle && 'IntersectionObserver' in window) {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const syncMotionToggle = () => { heroMotionToggle.hidden = reducedMotion.matches; };
+  syncMotionToggle();
+  reducedMotion.addEventListener?.('change', syncMotionToggle);
+  heroMotionToggle.addEventListener('click', () => {
+    const paused = heroMotionToggle.getAttribute('aria-pressed') !== 'true';
+    heroMotionToggle.setAttribute('aria-pressed', String(paused));
+    heroMotionToggle.title = paused ? '지도 움직임 재생' : '지도 움직임 일시정지';
+    setHeroMotionPaused(paused);
   });
-
-  activateTab(0);
-  gallery.classList.add('js');
 }
-
-document.querySelectorAll('[data-gallery]').forEach(initializeGallery);
 
 const revealTargets = document.querySelectorAll('[data-reveal]');
 if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && revealTargets.length) {
@@ -79,6 +39,8 @@ const walkthrough = document.querySelector('[data-walkthrough]');
 const walkthroughStage = walkthrough?.querySelector('[data-walkthrough-stage]');
 const walkthroughSteps = Array.from(walkthrough?.querySelectorAll('.walkthrough-steps [data-walkthrough-step]') ?? []);
 const walkthroughImages = Array.from(walkthroughStage?.querySelectorAll('[data-walkthrough-image]') ?? []);
+const routeStops = Array.from(walkthroughStage?.querySelectorAll('[data-route-stop]') ?? []);
+const updateRoute = createWalkthroughRoute(walkthroughStage?.querySelector('[data-walkthrough-route]'));
 const hasWalkthrough = walkthroughSteps.length > 0 && walkthroughSteps.length === walkthroughImages.length;
 const storyMedia = window.matchMedia('(min-width: 850px) and (min-height: 640px) and (prefers-reduced-motion: no-preference)');
 const mobileStoryMedia = window.matchMedia('(width < 850px) and (min-height: 540px) and (prefers-reduced-motion: no-preference)');
@@ -87,6 +49,9 @@ let storyEnabled = false;
 let mobileStoryEnabled = false;
 let activeStep = -1;
 let frame = null;
+
+const openingTransition = createOpeningTransition(document.querySelector('[data-opening]'), header, requestScrollUpdate);
+const galleryScroll = createGalleryScroll(document.querySelector('[data-gallery]'), header, requestScrollUpdate);
 
 function activateWalkthroughStep(index) {
   if (!hasWalkthrough || index === activeStep) return;
@@ -98,42 +63,44 @@ function activateWalkthroughStep(index) {
     step.classList.toggle('is-current', isCurrent);
     walkthroughImages[stepIndex].classList.toggle('is-current', isCurrent);
   });
+  routeStops.forEach((stop, stopIndex) => {
+    if (stopIndex === index) stop.setAttribute('aria-current', 'step');
+    else stop.removeAttribute('aria-current');
+  });
 }
 
-function nearestWalkthroughStep() {
+function readWalkthroughPosition() {
   const viewportHeight = window.innerHeight;
   const stageBottom = mobileStoryEnabled ? walkthroughStage.getBoundingClientRect().bottom : 0;
   const readingCenter = (viewportHeight + Math.min(viewportHeight, Math.max(0, stageBottom))) / 2;
-  let nearestIndex = 0;
-  let nearestDistance = Infinity;
-
-  walkthroughSteps.forEach((step, index) => {
+  const centers = walkthroughSteps.map((step) => {
     const { top, height } = step.getBoundingClientRect();
-    const distance = Math.abs(top + height / 2 - readingCenter);
-    if (distance < nearestDistance) {
-      nearestIndex = index;
-      nearestDistance = distance;
-    }
+    return top + height / 2;
   });
-
-  return nearestIndex;
+  const next = centers.findIndex((center) => center >= readingCenter);
+  if (next === -1) return centers.length - 1;
+  if (next === 0) return 0;
+  const previousCenter = centers[next - 1];
+  return next - 1 + (readingCenter - previousCenter) / (centers[next] - previousCenter);
 }
 
 function updateScrollStory() {
   frame = null;
 
-  let heroProgress;
-  if ((storyEnabled || mobileStoryEnabled) && heroStage) {
+  let heroProgress = openingTransition.update();
+  galleryScroll.update();
+  if (heroProgress === undefined && (storyEnabled || mobileStoryEnabled) && heroStage) {
     const track = hero.getBoundingClientRect();
     const travel = mobileStoryEnabled ? track.height * .68 : track.height - heroStage.getBoundingClientRect().height;
     const headerBottom = Math.max(0, header?.getBoundingClientRect().bottom ?? 0);
     heroProgress = travel > 0 ? Math.min(1, Math.max(0, (headerBottom - track.top) / travel)) : 0;
   }
-  const nextStep = (storyEnabled || mobileStoryEnabled) && hasWalkthrough ? nearestWalkthroughStep() : 0;
+  const position = (storyEnabled || mobileStoryEnabled) && hasWalkthrough ? readWalkthroughPosition() : 0;
 
   header?.classList.toggle('is-scrolled', window.scrollY > 12);
   if (heroProgress !== undefined) hero.style.setProperty('--hero-progress', String(heroProgress));
-  activateWalkthroughStep(nextStep);
+  activateWalkthroughStep(Math.round(position));
+  updateRoute(position / Math.max(1, walkthroughSteps.length - 1));
 }
 
 function requestScrollUpdate() {
@@ -146,6 +113,8 @@ function syncScrollStory() {
   document.body.classList.toggle('has-scroll-story', storyEnabled);
   document.body.classList.toggle('has-mobile-story', mobileStoryEnabled);
   if (!storyEnabled && !mobileStoryEnabled) hero?.style.removeProperty('--hero-progress');
+  openingTransition.sync();
+  galleryScroll.sync();
   if (frame !== null) window.cancelAnimationFrame(frame);
   updateScrollStory();
 }
