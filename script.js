@@ -81,8 +81,10 @@ const walkthroughSteps = Array.from(walkthrough?.querySelectorAll('.walkthrough-
 const walkthroughImages = Array.from(walkthroughStage?.querySelectorAll('[data-walkthrough-image]') ?? []);
 const hasWalkthrough = walkthroughSteps.length > 0 && walkthroughSteps.length === walkthroughImages.length;
 const storyMedia = window.matchMedia('(min-width: 850px) and (min-height: 640px) and (prefers-reduced-motion: no-preference)');
+const mobileStoryMedia = window.matchMedia('(width < 850px) and (min-height: 540px) and (prefers-reduced-motion: no-preference)');
 
 let storyEnabled = false;
+let mobileStoryEnabled = false;
 let activeStep = -1;
 let frame = null;
 
@@ -99,13 +101,15 @@ function activateWalkthroughStep(index) {
 }
 
 function nearestWalkthroughStep() {
-  const viewportCenter = window.innerHeight / 2;
+  const viewportHeight = window.innerHeight;
+  const stageBottom = mobileStoryEnabled ? walkthroughStage.getBoundingClientRect().bottom : 0;
+  const readingCenter = (viewportHeight + Math.min(viewportHeight, Math.max(0, stageBottom))) / 2;
   let nearestIndex = 0;
   let nearestDistance = Infinity;
 
   walkthroughSteps.forEach((step, index) => {
     const { top, height } = step.getBoundingClientRect();
-    const distance = Math.abs(top + height / 2 - viewportCenter);
+    const distance = Math.abs(top + height / 2 - readingCenter);
     if (distance < nearestDistance) {
       nearestIndex = index;
       nearestDistance = distance;
@@ -119,13 +123,13 @@ function updateScrollStory() {
   frame = null;
 
   let heroProgress;
-  if (storyEnabled && heroStage) {
+  if ((storyEnabled || mobileStoryEnabled) && heroStage) {
     const track = hero.getBoundingClientRect();
-    const travel = track.height - heroStage.getBoundingClientRect().height;
+    const travel = mobileStoryEnabled ? track.height * .68 : track.height - heroStage.getBoundingClientRect().height;
     const headerBottom = Math.max(0, header?.getBoundingClientRect().bottom ?? 0);
     heroProgress = travel > 0 ? Math.min(1, Math.max(0, (headerBottom - track.top) / travel)) : 0;
   }
-  const nextStep = storyEnabled && hasWalkthrough ? nearestWalkthroughStep() : 0;
+  const nextStep = (storyEnabled || mobileStoryEnabled) && hasWalkthrough ? nearestWalkthroughStep() : 0;
 
   header?.classList.toggle('is-scrolled', window.scrollY > 12);
   if (heroProgress !== undefined) hero.style.setProperty('--hero-progress', String(heroProgress));
@@ -138,8 +142,10 @@ function requestScrollUpdate() {
 
 function syncScrollStory() {
   storyEnabled = storyMedia.matches && Boolean(heroStage || hasWalkthrough);
+  mobileStoryEnabled = mobileStoryMedia.matches && Boolean(heroStage || hasWalkthrough);
   document.body.classList.toggle('has-scroll-story', storyEnabled);
-  if (!storyEnabled) hero?.style.removeProperty('--hero-progress');
+  document.body.classList.toggle('has-mobile-story', mobileStoryEnabled);
+  if (!storyEnabled && !mobileStoryEnabled) hero?.style.removeProperty('--hero-progress');
   if (frame !== null) window.cancelAnimationFrame(frame);
   updateScrollStory();
 }
@@ -147,5 +153,6 @@ function syncScrollStory() {
 activateWalkthroughStep(0);
 syncScrollStory();
 storyMedia.addEventListener('change', syncScrollStory);
+mobileStoryMedia.addEventListener('change', syncScrollStory);
 window.addEventListener('scroll', requestScrollUpdate, { passive: true });
 window.addEventListener('resize', requestScrollUpdate, { passive: true });
