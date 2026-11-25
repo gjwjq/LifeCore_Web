@@ -19,7 +19,9 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
   const motion = view.matchMedia('(prefers-reduced-motion: no-preference)');
   const nativeSnap = view.CSS.supports('scroll-snap-type', 'y proximity');
   let enabled = false;
-  let headerHeight;
+  let stageTop;
+  let stageHeight = 0;
+  let headerExiting = false;
   let activeIndex;
   let previousDistance;
   let direction = 0;
@@ -38,6 +40,13 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
     activeIndex = index;
     gallery.dataset.galleryIndex = String(index);
     gallery.style.setProperty('--gallery-index', String(index));
+  }
+
+  function setHeaderExit(exiting) {
+    if (exiting === headerExiting) return;
+    headerExiting = exiting;
+    if (exiting) header?.style.setProperty('--gallery-header-exit', '1');
+    else header?.style.removeProperty('--gallery-header-exit');
   }
 
   function protectAnchor(hash) {
@@ -80,34 +89,39 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
 
   function sync() {
     if (motion.matches) {
-      const measuredHeader = header?.offsetHeight ?? 0;
-      if (headerHeight !== measuredHeader) {
-        headerHeight = measuredHeader;
-        gallery.style.setProperty('--gallery-header-height', `${headerHeight}px`);
-      }
       gallery.classList.add('is-scroll-gallery');
 
-      const stageHeight = viewport.getBoundingClientRect().height;
+      stageHeight = viewport.getBoundingClientRect().height;
       const cssLimit = parseFloat(view.getComputedStyle(viewport).maxHeight);
-      const available = Math.min(view.innerHeight - headerHeight, Number.isFinite(cssLimit) ? cssLimit : Infinity);
+      const available = Math.min(view.innerHeight, Number.isFinite(cssLimit) ? cssLimit : Infinity);
       const contentHeight = Math.max(viewport.scrollHeight, ...panels.map((panel) => panel.scrollHeight));
       enabled = stageHeight > 0 && Math.max(stageHeight, contentHeight) <= available + snapTolerance;
+
+      const centeredTop = Math.max(0, (available - stageHeight) / 2);
+      if (enabled && centeredTop !== stageTop) {
+        stageTop = centeredTop;
+        gallery.style.setProperty('--gallery-stage-top', `${stageTop}px`);
+        previousDistance = undefined;
+        direction = 0;
+        setSnap(false);
+      }
     } else {
       enabled = false;
     }
 
     if (!enabled) {
       gallery.classList.remove('is-scroll-gallery');
-      if (headerHeight !== undefined) gallery.style.removeProperty('--gallery-header-height');
+      if (stageTop !== undefined) gallery.style.removeProperty('--gallery-stage-top');
       if (activeIndex !== undefined) {
         gallery.style.removeProperty('--gallery-index');
         delete gallery.dataset.galleryIndex;
       }
-      headerHeight = undefined;
+      stageTop = undefined;
       activeIndex = undefined;
       previousDistance = undefined;
       direction = 0;
       setSnap(false);
+      setHeaderExit(false);
     }
     requestUpdate?.();
   }
@@ -116,9 +130,10 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
     const isNavigating = anchorIsNavigating();
     if (!enabled) return;
 
-    const { top } = gallery.getBoundingClientRect();
-    const stickyTop = Math.max(0, header?.getBoundingClientRect().bottom ?? 0);
-    const distance = stickyTop - top;
+    const { top, height } = gallery.getBoundingClientRect();
+    const distance = stageTop - top;
+    const preRoll = Math.max(0, (header?.offsetHeight ?? 0) - stageTop) + 48;
+    setHeaderExit(distance >= -preRoll && distance < height - stageHeight);
     const stops = markers.map((marker) => marker.getBoundingClientRect().top - top);
     const lastIndex = stops.length - 1;
     if (stops.some((stop, index) => index > 0 && stop <= stops[index - 1])) {

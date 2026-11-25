@@ -127,18 +127,17 @@
       </div>
     </section>
 
-    <section class="screens section-space" id="screens" aria-labelledby="screens-heading">
+    <section class="screens section-space" aria-labelledby="screens-heading">
       <div class="shell">
-        <header class="section-heading" data-reveal>
-          <p class="section-label">앱 화면</p>
-          <h2 id="screens-heading">이동 중에도, 필요한 안내만.</h2>
-        </header>
-
-        <div class="gallery" data-gallery>
+        <div class="gallery" id="screens" data-gallery>
           <span class="gallery-snap-point" data-gallery-snap="0" aria-hidden="true"></span>
           <span class="gallery-snap-point" data-gallery-snap="1" aria-hidden="true"></span>
           <span class="gallery-snap-point" data-gallery-snap="2" aria-hidden="true"></span>
           <div class="gallery-window" data-gallery-window>
+            <header class="section-heading">
+              <p class="section-label">앱 화면</p>
+              <h2 id="screens-heading">이동 중에도, 필요한 안내만.</h2>
+            </header>
             <div class="gallery-track" data-gallery-track>
               <article class="gallery-panel gallery-panel-direction" id="panel-direction" data-gallery-panel>
                 <div class="gallery-panel-copy">
@@ -180,7 +179,9 @@
         </div>
       </div>
     </section>
+  </main>
 
+  <footer class="site-end">
     <section class="download section-space" id="download" aria-labelledby="download-heading">
       <div class="shell download-inner" data-reveal>
         <img class="download-icon" src="assets/app-icon.webp" width="82" height="82" loading="lazy" alt="">
@@ -189,19 +190,18 @@
         <a class="button button-dark" href="https://apps.apple.com/kr/app/follow-me/id6746979573">App Store에서 받기</a>
       </div>
     </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="shell footer-inner">
-      <a class="wordmark" href="#top" aria-label="Follow ME 처음으로">
-        <img src="assets/app-icon.webp" width="32" height="32" loading="lazy" alt="">
-        <span>Follow ME</span>
-      </a>
-      <nav aria-label="서비스 정보">
-        <a href="https://followme.yeesuho.com/support">고객지원</a>
-        <a href="https://followme.yeesuho.com/privacy">개인정보 처리방침</a>
-      </nav>
-      <small>© 2026 이코 (YEE Co.)</small>
+    <div class="site-footer">
+      <div class="shell footer-inner">
+        <a class="wordmark" href="#top" aria-label="Follow ME 처음으로">
+          <img src="assets/app-icon.webp" width="32" height="32" loading="lazy" alt="">
+          <span>Follow ME</span>
+        </a>
+        <nav aria-label="서비스 정보">
+          <a href="https://followme.yeesuho.com/support">고객지원</a>
+          <a href="https://followme.yeesuho.com/privacy">개인정보 처리방침</a>
+        </nav>
+        <small>© 2026 이코 (YEE Co.)</small>
+      </div>
     </div>
   </footer>
 </body>
