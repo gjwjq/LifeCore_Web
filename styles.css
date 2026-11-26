@@ -25,7 +25,9 @@
 
 html { scroll-behavior: smooth; }
 
-:root:is(.opening-snap-active, .opening-how-snap-active, .gallery-snap-active) { scroll-snap-type: y proximity; }
+:root:is(.opening-snap-active, .opening-how-snap-active, .gallery-snap-active, .gallery-download-snap-active) {
+  scroll-snap-type: y proximity;
+}
 
 body {
   margin: 0;
@@ -720,7 +722,7 @@ button { font: inherit; }
 .gallery.is-scroll-gallery {
   position: relative;
   --gallery-step-distance: clamp(240px, 48svh, 440px);
-  --gallery-end-hold: clamp(135px, 24svh, 235px);
+  --gallery-end-hold: clamp(190px, 36svh, 320px);
   --gallery-gap: clamp(10px, 1.3vw, 18px);
 }
 
@@ -854,6 +856,11 @@ button { font: inherit; }
   display: grid;
   grid-template-rows: 1fr auto;
   min-height: calc(100lvh - var(--header-height));
+}
+
+:root.gallery-download-snap-active #download {
+  scroll-snap-align: start;
+  scroll-margin-top: calc(var(--header-height) + 1px);
 }
 
 .download {

@@ -16,6 +16,7 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
     return { sync() {}, update() {} };
   }
 
+  const download = page.getElementById('download');
   const motion = view.matchMedia('(prefers-reduced-motion: no-preference)');
   const nativeSnap = view.CSS.supports('scroll-snap-type', 'y proximity');
   let enabled = false;
@@ -24,8 +25,10 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
   let headerExiting = false;
   let activeIndex;
   let previousDistance;
+  let previousScrollY;
   let direction = 0;
   let snapActive = false;
+  let downloadSnapActive = false;
   let protectedAnchor;
   let previousAnchorGap;
 
@@ -33,6 +36,12 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
     if (active === snapActive) return;
     snapActive = active;
     root.classList.toggle('gallery-snap-active', active);
+  }
+
+  function setDownloadSnap(active) {
+    if (active === downloadSnapActive) return;
+    downloadSnapActive = active;
+    root.classList.toggle('gallery-download-snap-active', active);
   }
 
   function setIndex(index) {
@@ -64,6 +73,7 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
     protectedAnchor = target;
     previousAnchorGap = undefined;
     setSnap(false);
+    setDownloadSnap(false);
     requestUpdate?.();
   }
 
@@ -102,8 +112,10 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
         stageTop = centeredTop;
         gallery.style.setProperty('--gallery-stage-top', `${stageTop}px`);
         previousDistance = undefined;
+        previousScrollY = undefined;
         direction = 0;
         setSnap(false);
+        setDownloadSnap(false);
       }
     } else {
       enabled = false;
@@ -119,11 +131,28 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
       stageTop = undefined;
       activeIndex = undefined;
       previousDistance = undefined;
+      previousScrollY = undefined;
       direction = 0;
       setSnap(false);
+      setDownloadSnap(false);
       setHeaderExit(false);
     }
     requestUpdate?.();
+  }
+
+  function updateDownloadSnap(canSnap, scrollDirection, scrollY, headerHeight) {
+    if (!download || !canSnap || scrollDirection < 0 || (scrollDirection === 0 && !downloadSnapActive)) {
+      setDownloadSnap(false);
+      return;
+    }
+
+    const { top } = download.getBoundingClientRect();
+    const viewportHeight = view.innerHeight;
+    const scrollContainer = page.scrollingElement ?? root;
+    const maxScroll = Math.max(0, scrollContainer.scrollHeight - viewportHeight);
+    const landing = Math.min(maxScroll, Math.max(0, scrollY + top - headerHeight));
+    const remaining = landing - scrollY;
+    setDownloadSnap(top < viewportHeight && remaining > snapTolerance && remaining <= viewportHeight * .35);
   }
 
   function update() {
@@ -132,13 +161,19 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
 
     const { top, height } = gallery.getBoundingClientRect();
     const distance = stageTop - top;
-    const preRoll = Math.max(0, (header?.offsetHeight ?? 0) - stageTop) + 48;
-    setHeaderExit(distance >= -preRoll && distance < height - stageHeight);
+    const travel = height - stageHeight;
+    const headerHeight = header?.offsetHeight ?? 0;
+    const preRoll = Math.max(0, headerHeight - stageTop) + 48;
+    setHeaderExit(distance >= -preRoll && distance < travel);
+    const scrollY = view.scrollY;
+    const scrollDirection = Math.sign(scrollY - (previousScrollY ?? scrollY));
+    previousScrollY = scrollY;
     const stops = markers.map((marker) => marker.getBoundingClientRect().top - top);
     const lastIndex = stops.length - 1;
     if (stops.some((stop, index) => index > 0 && stop <= stops[index - 1])) {
       setIndex(0);
       setSnap(false);
+      setDownloadSnap(false);
       return;
     }
 
@@ -151,9 +186,11 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
     while (index > 0 && distance < stops[index - 1] + (stops[index] - stops[index - 1]) * reverseThreshold) index--;
     setIndex(index);
 
+    const canSnap = nativeSnap && !isNavigating;
     const targetGap = stops[index] - distance;
-    setSnap(nativeSnap && !isNavigating && distance > stops[0] + snapTolerance &&
+    setSnap(canSnap && distance > stops[0] + snapTolerance &&
       distance < stops[lastIndex] - snapTolerance && Math.abs(targetGap) > snapTolerance && Math.sign(targetGap) === direction);
+    updateDownloadSnap(canSnap && !snapActive && index === lastIndex && distance >= travel, scrollDirection, scrollY, headerHeight);
   }
 
   protectAnchor(view.location?.hash);
