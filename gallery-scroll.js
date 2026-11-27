@@ -18,8 +18,10 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
 
   const download = page.getElementById('download');
   const motion = view.matchMedia('(prefers-reduced-motion: no-preference)');
+  const touchLayout = view.matchMedia('(max-width: 780px), (pointer: coarse)');
   const nativeSnap = view.CSS.supports('scroll-snap-type', 'y proximity');
   let enabled = false;
+  let touch = false;
   let stageTop;
   let stageHeight = 0;
   let headerExiting = false;
@@ -98,16 +100,32 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
   }
 
   function sync() {
+    const nextTouch = touchLayout.matches;
+    if (nextTouch !== touch) {
+      touch = nextTouch;
+      previousDistance = undefined;
+      previousScrollY = undefined;
+      direction = 0;
+      setSnap(false);
+      setDownloadSnap(false);
+    }
+
     if (motion.matches) {
       gallery.classList.add('is-scroll-gallery');
+      gallery.classList.toggle('is-touch-gallery', touch);
 
       stageHeight = viewport.getBoundingClientRect().height;
-      const cssLimit = parseFloat(view.getComputedStyle(viewport).maxHeight);
-      const available = Math.min(view.innerHeight, Number.isFinite(cssLimit) ? cssLimit : Infinity);
+      const maxHeight = view.getComputedStyle(viewport).maxHeight;
+      const cssLimit = maxHeight.endsWith('px') ? parseFloat(maxHeight) : NaN;
+      const headerSpace = touch ? (header?.offsetHeight ?? 0) : 0;
+      const fallbackHeight = view.innerHeight - headerSpace;
+      const stableHeight = Number.isFinite(cssLimit) ? cssLimit : fallbackHeight;
+      // The small viewport limit stays fixed as the mobile browser toolbar moves.
+      const available = touch ? stableHeight : Math.min(fallbackHeight, stableHeight);
       const contentHeight = Math.max(viewport.scrollHeight, ...panels.map((panel) => panel.scrollHeight));
       enabled = stageHeight > 0 && Math.max(stageHeight, contentHeight) <= available + snapTolerance;
 
-      const centeredTop = Math.max(0, (available - stageHeight) / 2);
+      const centeredTop = headerSpace + Math.max(0, (available - stageHeight) / 2);
       if (enabled && centeredTop !== stageTop) {
         stageTop = centeredTop;
         gallery.style.setProperty('--gallery-stage-top', `${stageTop}px`);
@@ -122,7 +140,7 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
     }
 
     if (!enabled) {
-      gallery.classList.remove('is-scroll-gallery');
+      gallery.classList.remove('is-scroll-gallery', 'is-touch-gallery');
       if (stageTop !== undefined) gallery.style.removeProperty('--gallery-stage-top');
       if (activeIndex !== undefined) {
         gallery.style.removeProperty('--gallery-index');
@@ -135,6 +153,8 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
       direction = 0;
       setSnap(false);
       setDownloadSnap(false);
+      setHeaderExit(false);
+    } else if (touch) {
       setHeaderExit(false);
     }
     requestUpdate?.();
@@ -156,7 +176,7 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
   }
 
   function update() {
-    const isNavigating = anchorIsNavigating();
+    const isNavigating = !touch && anchorIsNavigating();
     if (!enabled) return;
 
     const { top, height } = gallery.getBoundingClientRect();
@@ -164,7 +184,7 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
     const travel = height - stageHeight;
     const headerHeight = header?.offsetHeight ?? 0;
     const preRoll = Math.max(0, headerHeight - stageTop) + 48;
-    setHeaderExit(distance >= -preRoll && distance < travel);
+    setHeaderExit(!touch && distance >= -preRoll && distance < travel);
     const scrollY = view.scrollY;
     const scrollDirection = Math.sign(scrollY - (previousScrollY ?? scrollY));
     previousScrollY = scrollY;
@@ -177,14 +197,15 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
       return;
     }
 
-    const moved = Math.sign(distance - (previousDistance ?? distance));
-    if (moved && !isNavigating) direction = moved;
-    previousDistance = distance;
-
     let index = activeIndex ?? 0;
     while (index < lastIndex && distance >= stops[index] + (stops[index + 1] - stops[index]) * forwardThreshold) index++;
     while (index > 0 && distance < stops[index - 1] + (stops[index] - stops[index - 1]) * reverseThreshold) index--;
     setIndex(index);
+    if (touch) return;
+
+    const moved = Math.sign(distance - (previousDistance ?? distance));
+    if (moved && !isNavigating) direction = moved;
+    previousDistance = distance;
 
     const canSnap = nativeSnap && !isNavigating;
     const targetGap = stops[index] - distance;
@@ -201,8 +222,10 @@ export function createGalleryScroll(gallery, header, requestUpdate) {
     if (link && (!link.target || link.target === '_self')) protectAnchor(link.hash);
   });
 
-  if (motion.addEventListener) motion.addEventListener('change', sync);
-  else motion.addListener?.(sync);
+  for (const media of [motion, touchLayout]) {
+    if (media.addEventListener) media.addEventListener('change', sync);
+    else media.addListener?.(sync);
+  }
   view.addEventListener('resize', sync, { passive: true });
   if (typeof view.ResizeObserver === 'function') {
     const observer = new view.ResizeObserver(sync);

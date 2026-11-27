@@ -2,6 +2,15 @@ import {createWalkthroughRoute} from './route.js';
 import {initializeHeroScene} from './hero-scene.js';
 import {createOpeningTransition} from './opening.js';
 import {createGalleryScroll} from './gallery-scroll.js';
+import {createIntroMotion} from './intro-motion.js';
+
+const motionMedia = window.matchMedia('(prefers-reduced-motion: no-preference)');
+const storyMedia = window.matchMedia(
+  '(min-width: 850px) and (min-height: 640px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)',
+);
+const mobileStoryMedia = window.matchMedia(
+  '(max-width: 849px) and (min-height: 540px) and (prefers-reduced-motion: no-preference)',
+);
 
 const setHeroMotionPaused = initializeHeroScene(document.querySelector('[data-hero-route]'));
 const heroMotionToggle = document.querySelector('[data-hero-motion-toggle]');
@@ -19,17 +28,27 @@ if (heroMotionToggle && 'IntersectionObserver' in window) {
 }
 
 const revealTargets = document.querySelectorAll('[data-reveal]');
-if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && revealTargets.length) {
-  const observer = new IntersectionObserver((entries) => {
+const revealObserver = 'IntersectionObserver' in window && revealTargets.length
+  ? new IntersectionObserver((entries, observer) => {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue;
       entry.target.classList.add('is-visible');
       observer.unobserve(entry.target);
     }
-  });
+  })
+  : null;
 
-  revealTargets.forEach((target) => observer.observe(target));
-  document.body.classList.add('can-reveal');
+function syncReveals() {
+  if (!revealObserver) return;
+  const enabled = motionMedia.matches;
+  document.body.classList.toggle('can-reveal', enabled);
+  if (enabled) {
+    revealTargets.forEach((target) => {
+      if (!target.classList.contains('is-visible')) revealObserver.observe(target);
+    });
+  } else {
+    revealObserver.disconnect();
+  }
 }
 
 const header = document.querySelector('[data-site-header]');
@@ -42,15 +61,15 @@ const walkthroughImages = Array.from(walkthroughStage?.querySelectorAll('[data-w
 const routeStops = Array.from(walkthroughStage?.querySelectorAll('[data-route-stop]') ?? []);
 const updateRoute = createWalkthroughRoute(walkthroughStage?.querySelector('[data-walkthrough-route]'));
 const hasWalkthrough = walkthroughSteps.length > 0 && walkthroughSteps.length === walkthroughImages.length;
-const storyMedia = window.matchMedia('(min-width: 850px) and (min-height: 640px) and (prefers-reduced-motion: no-preference)');
-const mobileStoryMedia = window.matchMedia('(width < 850px) and (min-height: 540px) and (prefers-reduced-motion: no-preference)');
 
 let storyEnabled = false;
 let mobileStoryEnabled = false;
 let activeStep = -1;
 let frame = null;
 
-const openingTransition = createOpeningTransition(document.querySelector('[data-opening]'), header, requestScrollUpdate);
+const opening = document.querySelector('[data-opening]');
+const openingTransition = createOpeningTransition(opening, header, storyMedia, mobileStoryMedia, requestScrollUpdate);
+const updateIntroMotion = createIntroMotion(opening, requestScrollUpdate);
 const galleryScroll = createGalleryScroll(document.querySelector('[data-gallery]'), header, requestScrollUpdate);
 
 function activateWalkthroughStep(index) {
@@ -70,9 +89,12 @@ function activateWalkthroughStep(index) {
 }
 
 function readWalkthroughPosition() {
-  const viewportHeight = window.innerHeight;
-  const stageBottom = mobileStoryEnabled ? walkthroughStage.getBoundingClientRect().bottom : 0;
-  const readingCenter = (viewportHeight + Math.min(viewportHeight, Math.max(0, stageBottom))) / 2;
+  const readingCenter = mobileStoryEnabled
+    ? Math.max(
+      (header?.offsetHeight ?? 0) + walkthroughStage.offsetHeight,
+      walkthroughStage.getBoundingClientRect().bottom,
+    ) + walkthroughSteps[0].offsetHeight * .34
+    : window.innerHeight / 2;
   const centers = walkthroughSteps.map((step) => {
     const { top, height } = step.getBoundingClientRect();
     return top + height / 2;
@@ -84,10 +106,11 @@ function readWalkthroughPosition() {
   return next - 1 + (readingCenter - previousCenter) / (centers[next] - previousCenter);
 }
 
-function updateScrollStory() {
+function updateScrollStory(time) {
   frame = null;
 
   let heroProgress = openingTransition.update();
+  updateIntroMotion(motionMedia.matches, time);
   galleryScroll.update();
   if (heroProgress === undefined && (storyEnabled || mobileStoryEnabled) && heroStage) {
     const track = hero.getBoundingClientRect();
@@ -97,7 +120,6 @@ function updateScrollStory() {
   }
   const position = (storyEnabled || mobileStoryEnabled) && hasWalkthrough ? readWalkthroughPosition() : 0;
 
-  header?.classList.toggle('is-scrolled', window.scrollY > 12);
   if (heroProgress !== undefined) hero.style.setProperty('--hero-progress', String(heroProgress));
   activateWalkthroughStep(Math.round(position));
   updateRoute(position / Math.max(1, walkthroughSteps.length - 1));
@@ -115,13 +137,15 @@ function syncScrollStory() {
   if (!storyEnabled && !mobileStoryEnabled) hero?.style.removeProperty('--hero-progress');
   openingTransition.sync();
   galleryScroll.sync();
+  syncReveals();
   if (frame !== null) window.cancelAnimationFrame(frame);
-  updateScrollStory();
+  updateScrollStory(performance.now());
 }
 
-activateWalkthroughStep(0);
 syncScrollStory();
-storyMedia.addEventListener('change', syncScrollStory);
-mobileStoryMedia.addEventListener('change', syncScrollStory);
+for (const query of [storyMedia, mobileStoryMedia, motionMedia]) {
+  if (query.addEventListener) query.addEventListener('change', syncScrollStory);
+  else query.addListener?.(syncScrollStory);
+}
 window.addEventListener('scroll', requestScrollUpdate, { passive: true });
 window.addEventListener('resize', requestScrollUpdate, { passive: true });

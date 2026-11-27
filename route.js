@@ -1,5 +1,6 @@
 const stationX = .22;
 const stationY = [.18, .50, .82];
+const activeRouteColor = '#17645b';
 
 export function createWalkthroughRoute(canvas) {
   const context = canvas?.getContext?.('2d');
@@ -38,12 +39,12 @@ export function createWalkthroughRoute(canvas) {
     context.clearRect(0, 0, width, height);
     context.lineCap = 'round';
     context.lineWidth = 2;
-    context.strokeStyle = 'rgba(106, 133, 120, .37)';
+    context.strokeStyle = 'rgba(61, 121, 148, .38)';
     traceRoute(1);
     context.stroke();
 
     context.lineWidth = 1;
-    context.strokeStyle = 'rgba(111, 133, 122, .28)';
+    context.strokeStyle = 'rgba(61, 121, 148, .28)';
     context.beginPath();
     for (const station of stationY) {
       const y = height * station;
@@ -53,7 +54,7 @@ export function createWalkthroughRoute(canvas) {
     context.stroke();
 
     context.lineWidth = 2.5;
-    context.strokeStyle = '#147a59';
+    context.strokeStyle = activeRouteColor;
     const point = traceRoute(progress);
     context.stroke();
 
@@ -61,24 +62,24 @@ export function createWalkthroughRoute(canvas) {
     for (const station of stationY) {
       context.beginPath();
       context.arc(x, height * station, 4.5, 0, Math.PI * 2);
-      context.fillStyle = '#e9f1eb';
+      context.fillStyle = '#e8f5fa';
       context.fill();
       context.lineWidth = 1.5;
-      context.strokeStyle = '#8eab9e';
+      context.strokeStyle = '#86aebd';
       context.stroke();
     }
 
     context.beginPath();
     context.arc(point.x, point.y, 7, 0, Math.PI * 2);
-    context.fillStyle = '#f2faf5';
+    context.fillStyle = '#f2fcf9';
     context.fill();
     context.lineWidth = 1.5;
-    context.strokeStyle = '#147a59';
+    context.strokeStyle = activeRouteColor;
     context.stroke();
 
     context.beginPath();
     context.arc(point.x, point.y, 3.5, 0, Math.PI * 2);
-    context.fillStyle = '#147a59';
+    context.fillStyle = activeRouteColor;
     context.fill();
   }
 

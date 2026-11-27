@@ -1,7 +1,7 @@
 const forwardThreshold = .42;
 const reverseThreshold = .28;
 
-export function createOpeningTransition(opening, header, requestUpdate) {
+export function createOpeningTransition(opening, header, desktopMotion, mobileMotion, requestUpdate) {
   const viewport = opening?.querySelector('[data-opening-window]');
   const track = viewport?.querySelector('[data-opening-track]');
   const hero = track?.querySelector('[data-hero-scroll]');
@@ -13,13 +13,11 @@ export function createOpeningTransition(opening, header, requestUpdate) {
   const how = document?.getElementById('how');
   const view = document?.defaultView;
 
-  if (!copy || !visual || !intro || !introAnchor || !view?.matchMedia ||
+  if (!copy || !visual || !intro || !introAnchor || !view ||
       !view.CSS?.supports('position', 'sticky') || !view.CSS.supports('overflow', 'clip')) {
     return { sync() {}, update() {} };
   }
 
-  const motion = view.matchMedia('(prefers-reduced-motion: no-preference)');
-  const stacked = view.matchMedia('(max-width: 780px)');
   const nativeSnap = view.CSS.supports('scroll-snap-type', 'y proximity');
   let enabled = false;
   let progress;
@@ -36,10 +34,10 @@ export function createOpeningTransition(opening, header, requestUpdate) {
     return element.offsetHeight + (parseFloat(marginTop) || 0) + (parseFloat(marginBottom) || 0);
   }
 
-  function requiredHeight() {
+  function requiredHeight(stacked) {
     const copyHeight = outerHeight(copy);
     const visualHeight = outerHeight(visual);
-    const heroHeight = stacked.matches ? copyHeight + visualHeight : Math.max(copyHeight, visualHeight);
+    const heroHeight = stacked ? copyHeight + visualHeight : Math.max(copyHeight, visualHeight);
     return Math.max(heroHeight, outerHeight(intro) + 64);
   }
 
@@ -63,11 +61,11 @@ export function createOpeningTransition(opening, header, requestUpdate) {
   }
 
   function sync() {
-    const currentHeaderHeight = header?.offsetHeight ?? 0;
-    const available = view.innerHeight - currentHeaderHeight;
-    const fits = motion.matches && available > 0 && requiredHeight() <= available;
+    const allowed = desktopMotion.matches || mobileMotion.matches;
+    if (!allowed && !enabled) return;
 
-    if (fits) {
+    const currentHeaderHeight = header?.offsetHeight ?? 0;
+    if (allowed) {
       if (headerHeight !== currentHeaderHeight) {
         headerHeight = currentHeaderHeight;
         opening.style.setProperty('--opening-header-height', `${headerHeight}px`);
@@ -75,7 +73,8 @@ export function createOpeningTransition(opening, header, requestUpdate) {
       opening.classList.add('is-horizontal');
     }
 
-    enabled = fits && requiredHeight() <= viewport.getBoundingClientRect().height - currentHeaderHeight;
+    const stacked = view.matchMedia('(max-width: 780px)').matches;
+    enabled = allowed && requiredHeight(stacked) <= viewport.clientHeight - currentHeaderHeight;
     opening.classList.toggle('is-horizontal', enabled);
     if (!enabled) {
       if (headerHeight !== undefined) opening.style.removeProperty('--opening-header-height');
@@ -127,7 +126,7 @@ export function createOpeningTransition(opening, header, requestUpdate) {
       anchorDirection = 0;
     }
     // Arm only the stop ahead so the scene being left cannot pull the scroll back.
-    const canSnap = nativeSnap && !anchorDirection;
+    const canSnap = nativeSnap && desktopMotion.matches && !anchorDirection;
     const movesTowardScene = progress === 1 ? direction > 0 : direction < 0;
     const pastIntro = distance > travel + .2 * viewportHeight;
     setSnap(
@@ -157,10 +156,6 @@ export function createOpeningTransition(opening, header, requestUpdate) {
     if (link && (!link.target || link.target === '_self')) protectAnchor(link.hash);
   });
 
-  for (const media of [motion, stacked]) {
-    if (media.addEventListener) media.addEventListener('change', sync);
-    else media.addListener?.(sync);
-  }
   view.addEventListener('resize', sync, { passive: true });
   if (typeof view.ResizeObserver === 'function') {
     const observer = new view.ResizeObserver(sync);

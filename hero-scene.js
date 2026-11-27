@@ -1,6 +1,8 @@
 const drawDuration = 1150;
 const travelDuration = 10500;
-const ink = '#22785c';
+const maxFrameTime = 64;
+const routeColor = '#286d99';
+const signalColor = '#17645b';
 
 function buildRoute(width, height) {
   const anchors = [
@@ -108,13 +110,13 @@ export function initializeHeroScene(canvas) {
     context.beginPath();
     context.arc(x, y, 5 + pulse * 4, 0, Math.PI * 2);
     context.lineWidth = 1.2;
-    context.strokeStyle = ink;
+    context.strokeStyle = signalColor;
     context.stroke();
 
     context.globalAlpha = opacity;
     context.beginPath();
     context.arc(x, y, 3.25, 0, Math.PI * 2);
-    context.fillStyle = '#146147';
+    context.fillStyle = signalColor;
     context.fill();
     context.lineWidth = 1.25;
     context.strokeStyle = '#f5fff9';
@@ -136,14 +138,14 @@ export function initializeHeroScene(canvas) {
     context.stroke();
 
     context.lineWidth = 1.7;
-    context.strokeStyle = ink;
+    context.strokeStyle = routeColor;
     const tip = trace(end.distance * progress);
     if (progress > 0) context.stroke();
 
     if (progress < 1 && canAnimate()) {
       context.beginPath();
       context.arc(tip.x, tip.y, 3, 0, Math.PI * 2);
-      context.fillStyle = ink;
+      context.fillStyle = routeColor;
       context.fill();
       context.lineWidth = 1.25;
       context.strokeStyle = '#f5fff9';
@@ -155,7 +157,7 @@ export function initializeHeroScene(canvas) {
     context.fillStyle = '#f5fff9';
     context.fill();
     context.lineWidth = 1.25;
-    context.strokeStyle = ink;
+    context.strokeStyle = routeColor;
     context.stroke();
 
     if (drawElapsed === drawDuration && canAnimate()) {
@@ -168,7 +170,7 @@ export function initializeHeroScene(canvas) {
     frame = null;
     if (!canAnimate()) return;
 
-    const elapsed = now - (previousTime ?? now);
+    const elapsed = Math.min(maxFrameTime, now - (previousTime ?? now));
     previousTime = now;
     visibleElapsed += elapsed;
     const drawingTime = Math.min(elapsed, drawDuration - drawElapsed);
